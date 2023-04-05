@@ -4,9 +4,10 @@ import client.MinesweeperClient;
 
 
 public class Client {
+	
 	public static void main(String[] args) {
 		MinesweeperClient client = new MinesweeperClient();
-		client.startConnection("127.0.0.1", 5555);
+		client.startConnection("192.168.1.201", 5555);
 		System.out.println("connection started");
 		client.login("mchen354", "password");
 //		
@@ -19,4 +20,5 @@ public class Client {
 		client.logout();
 		System.out.println(client.getStatus());
 	}
+	
 }

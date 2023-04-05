@@ -47,8 +47,18 @@ public class MinesweeperClient {
     }
     
     
-    public String getToken() {
-    	return this.token;
+    public boolean isConnected() {
+    	return this.ip != null;
+    }
+    
+    
+    public String getIP() {
+    	return this.ip;
+    }
+    
+    
+    public int getPort() {
+    	return this.port;
     }
 
 

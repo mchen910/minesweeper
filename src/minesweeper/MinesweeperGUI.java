@@ -11,16 +11,29 @@
 package minesweeper;
 
 import java.io.File;
+import java.util.Optional;
 
 import client.MinesweeperClient;
 import javafx.animation.AnimationTimer;
+import javafx.animation.FillTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -34,12 +47,18 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.util.Pair;
 
 
 public class MinesweeperGUI extends Application {
@@ -75,9 +94,11 @@ public class MinesweeperGUI extends Application {
 	private Button loginButton;
 	private Button playAsGuestButton;
 	private Button createAccountButton;
+	private Button settingsButton;
 	
 	private long time;
 	private int flags;
+	
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -160,18 +181,17 @@ public class MinesweeperGUI extends Application {
 				if (e.getButton() == MouseButton.PRIMARY || e.getButton() == MouseButton.SECONDARY) {
 					int col = view.rowForYPos(e.getY());
 					int row = view.colForXPos(e.getX());
-
-					// Row out of bounds
-					if (row >= model.getNumRows())
-						row = model.getNumRows() - 1;
-					if (row < 0) 
-						row = 0;
 					
-					// Col out of bounds
-					if (col >= model.getNumCols())
-						col = model.getNumCols() - 1;
-					else if (col < 0) 
-						col = 0;
+					if (model.getNumRevealed() == 0) {
+						// first click, start timer
+						timer.start();
+						
+						// make sure the user can't click on a mine on their first click
+						while (model.isMine(row, col)) {
+							model = new MinesweeperModel(currentRows, currentCols, currentMines);
+							view.setModel(model);
+						}
+					}
 										
 					if (e.getButton() == MouseButton.PRIMARY) {
 						model.reveal(row, col);
@@ -194,7 +214,6 @@ public class MinesweeperGUI extends Application {
 		
 		/* ======================= TIMER ========================= */
 		timer = new MinesweeperTimer((long)1e9);
-		timer.start();
 		
 		
 		
@@ -317,7 +336,6 @@ public class MinesweeperGUI extends Application {
 		mineLbl.setTextAlignment(TextAlignment.CENTER);
 		mineLbl.setPadding(new Insets(10));
 		
-		
 		time = 0;
 		timeLbl = new Label();
 		timeLbl.setText("Time Elapsed\n" + this.time);
@@ -341,20 +359,86 @@ public class MinesweeperGUI extends Application {
 
 		
 		
-		/* ======================= LOGIN ========================= */
-//		ImageView titleImg = new ImageView(new Image("images/icon.png"));
-//		titleImg.setFitWidth(100);
-//		titleImg.setFitHeight(100);
-		
+		/* ======================= OPEN SCREEN ========================= */
+		// Create the MinesweeperClient responsible for communicating with the server
 		this.client = new MinesweeperClient();
-		client.startConnection("127.0.0.1", 5555);
+		
+		// Borderpane for the opening screen
+		BorderPane openPane = new BorderPane();
 		
 		VBox titleLayout = new VBox();
 		this.loginButton = new Button("Login");
 		this.createAccountButton = new Button("Create Account");
 		this.playAsGuestButton = new Button("Play as Guest");
+		this.settingsButton = new Button("settings");
 		
-		titleLayout.getChildren().addAll(this.loginButton, this.createAccountButton, this.playAsGuestButton);
+		titleLayout.getChildren().addAll(this.loginButton, this.createAccountButton, this.playAsGuestButton, this.settingsButton);
+		openPane.setCenter(titleLayout);
+		
+		MenuBar openMenuBar = new MenuBar();
+		
+		
+		/* ======================= SETTINGS =========================== */
+		Dialog<Pair<Pair<String, String>, Pair<Boolean, Boolean>>> settingsDialog = new Dialog<>();
+		settingsDialog.setTitle("Settings");
+		settingsDialog.setHeaderText(null);
+		
+		GridPane settingsGrid = new GridPane();
+		settingsGrid.setHgap(10);
+		settingsGrid.setVgap(10);
+		settingsGrid.setPadding(new Insets(20, 50, 10, 10));
+		
+		TextField ipField = new TextField();
+		ipField.setPromptText("Server IP Address");
+		TextField portField = new TextField();
+		portField.setPromptText("Port Number");
+		
+		ToggleSwitch animationToggle = new ToggleSwitch();
+		animationToggle.setSize(30, 15);
+		ToggleSwitch soundToggle = new ToggleSwitch();
+		soundToggle.setSize(30, 15);
+		
+		settingsGrid.add(new Label("Server IP"), 0, 0);
+		settingsGrid.add(ipField, 1, 0);
+		settingsGrid.add(new Label("Port Number"), 0, 1);
+		settingsGrid.add(portField, 1, 1);
+		settingsGrid.add(new Label("Animations"), 0, 2);
+		settingsGrid.add(animationToggle, 1, 2);
+		settingsGrid.add(new Label("Sounds"), 0, 3);
+		settingsGrid.add(soundToggle, 1, 3);
+		
+		ButtonType applyBtnType = new ButtonType("Apply", ButtonData.APPLY);
+		ButtonType cancelBtnType = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
+		
+		settingsDialog.getDialogPane().getButtonTypes().setAll(applyBtnType, cancelBtnType);
+		
+		Node applyBtn = settingsDialog.getDialogPane().lookupButton(applyBtnType);
+		applyBtn.setDisable(true);
+		
+		ipField.textProperty().addListener((observable, oldValue, newValue) -> {
+			String ipPattern = "^((0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)\\.){3}(0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)$";
+			applyBtn.setDisable(!newValue.matches(ipPattern));
+		});
+		
+		portField.textProperty().addListener((observable, oldValue, newValue) -> {
+			applyBtn.setDisable(!newValue.matches("\\d+") && (Integer.parseInt(newValue) < 1 || Integer.parseInt(newValue) > 65535));
+		});
+		
+		settingsDialog.setResultConverter(dialogButton -> {
+			Boolean animationsOn = animationToggle.switchedOnProperty().getValue();
+			Boolean soundsOn = soundToggle.switchedOnProperty().getValue();
+			
+			if (dialogButton == applyBtnType) 
+				return new Pair<Pair<String, String>, Pair<Boolean, Boolean>>(
+						new Pair<String, String>(ipField.getText(), portField.getText()),
+						new Pair<Boolean, Boolean>(animationsOn, soundsOn)
+					);
+			return null;
+		});
+//		
+		settingsDialog.getDialogPane().setContent(settingsGrid);
+		
+		
 		
 		
 		/* ======================= LOGIN SCENE ========================= */
@@ -405,15 +489,33 @@ public class MinesweeperGUI extends Application {
 		this.loginButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				stage.setScene(loginScene);
+				if (!client.isConnected()) {
+					String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
+					Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
+					a.setTitle("Missing Server Address");
+					a.setHeaderText(null);
+					a.showAndWait();
+					
+				} else {
+					stage.setScene(loginScene);
+				}
 			}
 		});
 		
 		
 		this.createAccountButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
-			public void handle(ActionEvent arg0) {
-				stage.setScene(signupScene);	
+			public void handle(ActionEvent event) {
+				if (!client.isConnected()) {
+					String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
+					Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
+					a.setTitle("Missing Server Address");
+					a.setHeaderText(null);
+					a.showAndWait();
+					
+				} else {
+					stage.setScene(signupScene);
+				}
 			}
 			
 		});
@@ -426,11 +528,30 @@ public class MinesweeperGUI extends Application {
 			}
 		});
 		
+		
+		this.settingsButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent event) {
+				Optional<Pair<Pair<String, String>, Pair<Boolean, Boolean>>> result = settingsDialog.showAndWait();
+				result.ifPresent(res -> {
+					System.out.println(
+							"server ip: " + res.getKey().getKey() + 
+							"\nport #: " + res.getKey().getValue() + 
+							"\nanimations on: " + res.getValue().getKey() + 
+							"\nsounds on: " + res.getValue().getValue()
+					);
+				});
+			}
+		});
+		
+		
 		okBtn.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
 				String username = usernameField.getText();
 				String password = passwordField.getText();
+
 				client.login(username, password);
 				
 				if (client.getStatus() > 299)
@@ -448,14 +569,19 @@ public class MinesweeperGUI extends Application {
 				
 				client.createUser(username, password);
 				
-				if (client.getStatus() > 299)
-					System.out.println("status: " + client.getStatus() + ", signup failed");
+				if (client.getStatus() == 401) {
+					String message = "A user with the username " + username + " already exists. Please choose a different username.";
+					Alert a = new Alert(AlertType.ERROR, message, ButtonType.OK);
+					a.setTitle("Username Error");
+					a.setHeaderText(null);
+					a.showAndWait();
+				}
 				
 				stage.setScene(gameScene);
 			}
 		});
 		
-		Scene titleScene = new Scene(titleLayout);
+		Scene titleScene = new Scene(openPane);
 		stage.setScene(titleScene);
 		stage.show();
 		
@@ -500,5 +626,100 @@ public class MinesweeperGUI extends Application {
 				this.previousTime = now;
 			}
 		}
+	}
+	
+	
+	private class ToggleSwitch extends Parent {
+		
+		private BooleanProperty switchedOn;
+		
+		private TranslateTransition translateAnimation;
+		private FillTransition fillAnimation;
+		private ParallelTransition animation;
+		
+		private Rectangle background;
+		private Circle trigger;
+		
+		private Color offColor = Color.WHITE;
+		private Color onColor = Color.DEEPSKYBLUE;
+		private Color strokeColor = Color.LIGHTGRAY;
+		
+		
+		public ToggleSwitch() {
+			this.switchedOn = new SimpleBooleanProperty(false);
+			this.translateAnimation = new TranslateTransition(Duration.seconds(0.25));
+			this.fillAnimation = new FillTransition(Duration.seconds(0.25));
+			this.animation = new ParallelTransition(translateAnimation, fillAnimation);
+			
+			this.initComponents();
+			this.initAnimations();
+			
+			this.setOnMouseClicked(event -> {
+				switchedOn.set(!switchedOn.get());
+			});
+			
+		}
+		
+		
+		public void setSize(int width, int height) {
+			this.background.setWidth(width);
+			this.background.setHeight(height);
+			this.background.setArcWidth(width / 2);
+			this.background.setArcHeight(height);
+			this.trigger.setRadius(height / 2);
+			this.trigger.setCenterX(height / 2);
+			this.trigger.setCenterY(height / 2);
+		}
+		
+		
+		public void setOffColor(Color color) {
+			this.background.setFill(this.offColor);
+			this.background.setStroke(this.strokeColor);
+			this.trigger.setFill(this.offColor);
+			this.trigger.setStroke(this.strokeColor);
+		}
+		
+		
+		public void setOnColor(Color color) {
+			this.onColor = color;
+		}
+		
+		
+		private void initComponents() {
+			this.background = new Rectangle(100, 50);
+			this.background.setFill(this.offColor);
+			this.background.setStroke(this.strokeColor);
+			this.background.setArcWidth(50);
+			this.background.setArcHeight(50);
+			
+			this.trigger = new Circle(25);
+			this.trigger.setCenterX(25);
+			this.trigger.setCenterY(25);
+			this.trigger.setFill(this.offColor);
+			this.trigger.setStroke(this.strokeColor);
+			
+			this.getChildren().addAll(this.background, this.trigger);
+		}
+		
+		
+		private void initAnimations() {
+			translateAnimation.setNode(trigger);
+			fillAnimation.setShape(background);
+			
+			this.switchedOn.addListener((observable, oldState, newState) -> {
+				boolean isOn = newState.booleanValue();
+				translateAnimation.setToX(isOn ? this.background.getWidth() - this.trigger.getRadius() * 2 : 0);
+				fillAnimation.setFromValue(isOn ? this.offColor : this.onColor);
+				fillAnimation.setToValue(isOn ? this.onColor : this.offColor);
+				
+				animation.play();
+			});
+		}
+		
+		
+		public BooleanProperty switchedOnProperty() {
+			return switchedOn;
+		}
+		
 	}
 }
