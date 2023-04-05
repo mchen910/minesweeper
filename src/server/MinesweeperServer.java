@@ -140,6 +140,12 @@ public class MinesweeperServer {
 
 				String inputLine;
 				while ((inputLine = in.readLine()) != null) {
+					// check for login
+					if (inputLine.equals("minesweeper-login")) {
+						this.out.println("confirmed");
+						continue;
+					}
+					
 					// Format of a string: [u|l][0|1|2]:[username/password/token/level/score]
 					String res = null;
 					

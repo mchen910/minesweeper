@@ -11,6 +11,7 @@
 package minesweeper;
 
 import java.io.File;
+import java.net.ConnectException;
 import java.util.Optional;
 
 import client.MinesweeperClient;
@@ -21,8 +22,6 @@ import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -45,7 +44,6 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -98,6 +96,8 @@ public class MinesweeperGUI extends Application {
 	
 	private long time;
 	private int flags;
+	private boolean animationsOn;
+	private boolean soundsOn;
 	
 	
 	public static void main(String[] args) {
@@ -175,38 +175,35 @@ public class MinesweeperGUI extends Application {
 		model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
 		view.setModel(model);
 		
-		view.setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent e) {
-				if (e.getButton() == MouseButton.PRIMARY || e.getButton() == MouseButton.SECONDARY) {
-					int col = view.rowForYPos(e.getY());
-					int row = view.colForXPos(e.getX());
+		view.setOnMousePressed(e -> {
+			if (e.getButton() == MouseButton.PRIMARY || e.getButton() == MouseButton.SECONDARY) {
+				int col = view.rowForYPos(e.getY());
+				int row = view.colForXPos(e.getX());
+				
+				if (model.getNumRevealed() == 0) {
+					// first click, start timer
+					timer.start();
 					
-					if (model.getNumRevealed() == 0) {
-						// first click, start timer
-						timer.start();
-						
-						// make sure the user can't click on a mine on their first click
-						while (model.isMine(row, col)) {
-							model = new MinesweeperModel(currentRows, currentCols, currentMines);
-							view.setModel(model);
-						}
+					// make sure the user can't click on a mine on their first click
+					while (model.isMine(row, col)) {
+						model = new MinesweeperModel(currentRows, currentCols, currentMines);
+						view.setModel(model);
 					}
-										
-					if (e.getButton() == MouseButton.PRIMARY) {
-						model.reveal(row, col);
-						
-					} else {
-						model.setFlag(row, col);
-						
-						// Set mine number label
-						if (model.isFlag(row, col)) 
-							flags--;
-						else
-							flags++;
-						
-						mineLbl.setText("Mines Remaining\n" + flags);
-					}
+				}
+									
+				if (e.getButton() == MouseButton.PRIMARY) {
+					model.reveal(row, col);
+					
+				} else {
+					model.setFlag(row, col);
+					
+					// Set mine number label
+					if (model.isFlag(row, col)) 
+						flags--;
+					else
+						flags++;
+					
+					mineLbl.setText("Mines Remaining\n" + flags);
 				}
 			}
 		});
@@ -218,108 +215,81 @@ public class MinesweeperGUI extends Application {
 		
 		
 		/* ======================= MENUS ========================= */
-		beginnerGame.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
-				view.setModel(model);
-				
-				currentRows = BEGINNER_ROWS;
-				currentCols = BEGINNER_COLS;
-				currentMines = BEGINNER_MINES;
-				
-				timer.stop();
-				time = 0;
-				timer.start();
-				stage.sizeToScene();
-				
-				flags = model.getNumMines();
-				mineLbl.setText("Mines Remaining\n" + flags);
-			}
-		});
-		
-		intermediateGame.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				model = new MinesweeperModel(INTERMEDIATE_ROWS, INTERMEDIATE_COLS, INTERMEDIATE_MINES);
-				view.setModel(model);
-				view.setTileSize(15);
-				
-				currentRows = INTERMEDIATE_ROWS;
-				currentCols = INTERMEDIATE_COLS;
-				currentMines = INTERMEDIATE_MINES;
-				
-				timer.stop();
-				time = 0;
-				timer.start();
-				stage.sizeToScene();
-				
-				flags = model.getNumMines();
-				mineLbl.setText("Mines Remaining\n" + flags);
-			}
-		});
-		
-		expertGame.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				model = new MinesweeperModel(EXPERT_ROWS, EXPERT_COLS, EXPERT_MINES);
-				view.setModel(model);
-				view.setTileSize(15);
-				
-				currentRows = EXPERT_ROWS;
-				currentCols = EXPERT_COLS;
-				currentMines = EXPERT_MINES;
-				
-				timer.stop();
-				time = 0;
-				timer.start();
-				stage.sizeToScene();
-				
-				flags = model.getNumMines();
-				mineLbl.setText("Mines Remaining\n" + flags);
-			}
+		beginnerGame.setOnAction(event -> {
+			model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
+			view.setModel(model);
+			
+			currentRows = BEGINNER_ROWS;
+			currentCols = BEGINNER_COLS;
+			currentMines = BEGINNER_MINES;
+			
+			timer.stop();
+			time = 0;
+			timer.start();
+			stage.sizeToScene();
+			
+			flags = model.getNumMines();
+			mineLbl.setText("Mines Remaining\n" + flags);
 		});
 		
 		
-		exitGame.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				System.exit(0);
-			}
+		intermediateGame.setOnAction(event -> {
+			model = new MinesweeperModel(INTERMEDIATE_ROWS, INTERMEDIATE_COLS, INTERMEDIATE_MINES);
+			view.setModel(model);
+			view.setTileSize(15);
+			
+			currentRows = INTERMEDIATE_ROWS;
+			currentCols = INTERMEDIATE_COLS;
+			currentMines = INTERMEDIATE_MINES;
+			
+			timer.stop();
+			time = 0;
+			timer.start();
+			stage.sizeToScene();
+			
+			flags = model.getNumMines();
+			mineLbl.setText("Mines Remaining\n" + flags);
 		});
 		
-		numMinesOption.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				TextInputDialog input = new TextInputDialog();
-				input.setTitle("Number of Mines");
-				input.setHeaderText("How many mines would you like?");  
-				input.showAndWait();  
-				
-				String answer = input.getEditor().getText(); 
-				int mines = Integer.parseInt(answer);
-				
-				if (mines > 0 && mines < currentRows * currentCols)
-					currentMines = mines;
-				
-				model = new MinesweeperModel(currentRows, currentCols, currentMines);
-				view.setModel(model);
-			}
+		expertGame.setOnAction(event -> {
+			model = new MinesweeperModel(EXPERT_ROWS, EXPERT_COLS, EXPERT_MINES);
+			view.setModel(model);
+			view.setTileSize(15);
+			
+			currentRows = EXPERT_ROWS;
+			currentCols = EXPERT_COLS;
+			currentMines = EXPERT_MINES;
+			
+			timer.stop();
+			time = 0;
+			timer.start();
+			stage.sizeToScene();
+			
+			flags = model.getNumMines();
+			mineLbl.setText("Mines Remaining\n" + flags);
 		});
 		
-		aboutMenu.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {				
-				aboutStage.show();
-			}
+		
+		exitGame.setOnAction(event -> System.exit(0));
+		
+		numMinesOption.setOnAction(event -> {
+			TextInputDialog input = new TextInputDialog();
+			input.setTitle("Number of Mines");
+			input.setHeaderText("How many mines would you like?");  
+			input.showAndWait();  
+			
+			String answer = input.getEditor().getText(); 
+			int mines = Integer.parseInt(answer);
+			
+			if (mines > 0 && mines < currentRows * currentCols)
+				currentMines = mines;
+			
+			model = new MinesweeperModel(currentRows, currentCols, currentMines);
+			view.setModel(model);
 		});
 		
-		howToPlayMenu.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				webStage.show();
-			}
-		});
+		aboutMenu.setOnAction(event -> aboutStage.show());
+		howToPlayMenu.setOnAction(event -> webStage.show());
 
 
 		
@@ -417,11 +387,24 @@ public class MinesweeperGUI extends Application {
 		
 		ipField.textProperty().addListener((observable, oldValue, newValue) -> {
 			String ipPattern = "^((0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)\\.){3}(0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)$";
-			applyBtn.setDisable(!newValue.matches(ipPattern));
+			applyBtn.setDisable(
+					!newValue.matches(ipPattern) || 
+					(!portField.getText().matches("\\d+") || 
+					  portField.getText().length() == 0 || 
+					  Integer.parseInt(portField.getText()) < 1 || 
+					  Integer.parseInt(portField.getText()) > 65535)
+			);
 		});
 		
 		portField.textProperty().addListener((observable, oldValue, newValue) -> {
-			applyBtn.setDisable(!newValue.matches("\\d+") && (Integer.parseInt(newValue) < 1 || Integer.parseInt(newValue) > 65535));
+			String ipPattern = "^((0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)\\.){3}(0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)$";
+			applyBtn.setDisable(
+					!ipField.getText().matches(ipPattern) || 
+					(!newValue.matches("\\d+") || 
+					  newValue.length() == 0 || 
+					  Integer.parseInt(newValue) < 1 || 
+					  Integer.parseInt(newValue) > 65535)
+			);
 		});
 		
 		settingsDialog.setResultConverter(dialogButton -> {
@@ -435,7 +418,7 @@ public class MinesweeperGUI extends Application {
 					);
 			return null;
 		});
-//		
+		
 		settingsDialog.getDialogPane().setContent(settingsGrid);
 		
 		
@@ -486,99 +469,86 @@ public class MinesweeperGUI extends Application {
 		
 		
 		
-		this.loginButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if (!client.isConnected()) {
-					String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
-					Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
-					a.setTitle("Missing Server Address");
-					a.setHeaderText(null);
-					a.showAndWait();
-					
-				} else {
-					stage.setScene(loginScene);
-				}
+		this.loginButton.setOnAction(event -> {
+			if (!client.isConnected()) {
+				String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
+				Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
+				a.setTitle("Missing Server Address");
+				a.setHeaderText(null);
+				a.showAndWait();
+				
+			} else {
+				stage.setScene(loginScene);
 			}
 		});
 		
 		
-		this.createAccountButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if (!client.isConnected()) {
-					String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
-					Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
-					a.setTitle("Missing Server Address");
+		this.createAccountButton.setOnAction(event -> {
+			if (!client.isConnected()) {
+				String message = "Not connected to a server. Input the server's IP address and port number from the settings menu.";
+				Alert a = new Alert(AlertType.WARNING, message, ButtonType.OK);
+				a.setTitle("Missing Server Address");
+				a.setHeaderText(null);
+				a.showAndWait();
+					
+			} else {
+				stage.setScene(signupScene);
+			}
+		});
+		
+		
+		this.playAsGuestButton.setOnAction(event -> stage.setScene(gameScene));
+		
+		this.settingsButton.setOnAction(event -> {
+			Optional<Pair<Pair<String, String>, Pair<Boolean, Boolean>>> result = settingsDialog.showAndWait();
+			result.ifPresent(res -> {
+				String ip = res.getKey().getKey();
+				int port = Integer.parseInt(res.getKey().getValue());
+				
+				try {
+					this.client.startConnection(ip, port);
+					
+				} catch (ConnectException e) {
+					System.out.println("error");
+					Alert a = new Alert(AlertType.ERROR, "Connection refused. Check the IP address or port number of the server.");
+					a.setTitle("Invalid Server Information");
 					a.setHeaderText(null);
 					a.showAndWait();
-					
-				} else {
-					stage.setScene(signupScene);
 				}
+				
+				this.animationsOn = res.getValue().getKey();
+				this.soundsOn = res.getValue().getValue();
+			});
+		});
+
+		
+		okBtn.setOnAction(event -> {
+			String username = usernameField.getText();
+			String password = passwordField.getText();
+
+			client.login(username, password);
+			
+			if (client.getStatus() > 299)
+				System.out.println("status: " + client.getStatus() + ", login failed");
+			
+			stage.setScene(gameScene);
+		});
+		
+		signupBtn.setOnAction(event -> {
+			String username = usernameSignupField.getText();
+			String password = passwordSignupField.getText();
+			
+			client.createUser(username, password);
+			
+			if (client.getStatus() == 401) {
+				String message = "A user with the username " + username + " already exists. Please choose a different username.";
+				Alert a = new Alert(AlertType.ERROR, message, ButtonType.OK);
+				a.setTitle("Username Error");
+				a.setHeaderText(null);
+				a.showAndWait();
 			}
 			
-		});
-		
-		
-		this.playAsGuestButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				stage.setScene(gameScene);
-			}
-		});
-		
-		
-		this.settingsButton.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent event) {
-				Optional<Pair<Pair<String, String>, Pair<Boolean, Boolean>>> result = settingsDialog.showAndWait();
-				result.ifPresent(res -> {
-					System.out.println(
-							"server ip: " + res.getKey().getKey() + 
-							"\nport #: " + res.getKey().getValue() + 
-							"\nanimations on: " + res.getValue().getKey() + 
-							"\nsounds on: " + res.getValue().getValue()
-					);
-				});
-			}
-		});
-		
-		
-		okBtn.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				String username = usernameField.getText();
-				String password = passwordField.getText();
-
-				client.login(username, password);
-				
-				if (client.getStatus() > 299)
-					System.out.println("status: " + client.getStatus() + ", login failed");
-				
-				stage.setScene(gameScene);
-			}
-		});
-		
-		signupBtn.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				String username = usernameSignupField.getText();
-				String password = passwordSignupField.getText();
-				
-				client.createUser(username, password);
-				
-				if (client.getStatus() == 401) {
-					String message = "A user with the username " + username + " already exists. Please choose a different username.";
-					Alert a = new Alert(AlertType.ERROR, message, ButtonType.OK);
-					a.setTitle("Username Error");
-					a.setHeaderText(null);
-					a.showAndWait();
-				}
-				
-				stage.setScene(gameScene);
-			}
+			stage.setScene(gameScene);
 		});
 		
 		Scene titleScene = new Scene(openPane);

@@ -1,5 +1,7 @@
 package test;
 
+import java.net.ConnectException;
+
 import client.MinesweeperClient;
 
 
@@ -7,7 +9,12 @@ public class Client {
 	
 	public static void main(String[] args) {
 		MinesweeperClient client = new MinesweeperClient();
-		client.startConnection("192.168.1.201", 5555);
+		try {
+			client.startConnection("192.168.1.201", 5555);
+		} catch (ConnectException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("connection started");
 		client.login("mchen354", "password");
 //		

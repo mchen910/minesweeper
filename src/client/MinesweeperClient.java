@@ -11,11 +11,12 @@
 
 package client;
 
-import java.net.Socket;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.IOException;
+import java.net.ConnectException;
+import java.net.Socket;
 
 import utils.JSONObject;
 
@@ -44,6 +45,8 @@ public class MinesweeperClient {
     	this.username = null;
     	this.password = null;
     	this.leaderboardClient = null;
+    	this.ip = null;
+    	this.port = -1;
     }
     
     
@@ -62,7 +65,7 @@ public class MinesweeperClient {
     }
 
 
-    public void startConnection(String ip, int port) {
+    public void startConnection(String ip, int port) throws ConnectException {
         try {
         	this.ip = ip;
         	this.port = port;
@@ -70,6 +73,14 @@ public class MinesweeperClient {
             this.clientSocket = new Socket(ip, port);
             this.out = new PrintWriter(this.clientSocket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
+            
+            // Send a login message and wait for confirmation
+            this.out.println("minesweeper-login");
+            String res = this.in.readLine();
+            
+            if (!res.equals("confirmed")) {
+            	throw new ConnectException("Invalid server address");
+            }
         
         } catch (IOException e) {
             e.printStackTrace();
