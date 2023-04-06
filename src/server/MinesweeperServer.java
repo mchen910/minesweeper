@@ -111,6 +111,7 @@ public class MinesweeperServer {
 
     private void startAPI() {
         try {
+            System.out.println(this.dotenv.get("NODE_PATH"));
             ProcessBuilder pb = new ProcessBuilder(this.dotenv.get("NODE_PATH"), "src/server/api/index.js");
             apiProcess = pb.start();
 
@@ -121,6 +122,7 @@ public class MinesweeperServer {
 
 
     private static class MinesweeperClientHandler extends Thread {
+        
         private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
@@ -128,11 +130,13 @@ public class MinesweeperServer {
         /** MinesweeperRequest object for every client handler */
         private MinesweeperRequest req;
 
+        
         public MinesweeperClientHandler(Socket socket) {
             this.clientSocket = socket;
             this.req = new MinesweeperRequest();
         }
 
+        
         public void run() {
             try {
                 this.out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -143,6 +147,21 @@ public class MinesweeperServer {
                     // check for login
                     if (inputLine.equals("minesweeper-login")) {
                         this.out.println("confirmed");
+                        continue;
+                    }
+                    
+                    // check for logout
+                    if (inputLine.equals("minesweeper-logout")) {
+                        System.out.println("logout confirmed");
+                        
+                        for (MinesweeperBroadcastHandler handler : MinesweeperServer.connections) {
+                            if (handler.clientSocket.getInetAddress().equals(this.clientSocket.getInetAddress())) {
+                                MinesweeperServer.connections.remove(handler);
+                                handler.interrupt();
+                                break;
+                            }
+                        }
+                        
                         continue;
                     }
 
@@ -161,7 +180,7 @@ public class MinesweeperServer {
                             res = this.req.createNewUser(username, passwordOrToken);
                             break;
 
-                            // login
+                        // login
                         case '1':
                             res = this.req.loginUser(username, passwordOrToken);
                             break;
@@ -175,13 +194,14 @@ public class MinesweeperServer {
                     } else if (inputLine.startsWith("l")) {
                         // leaderboard operations
                         switch (inputLine.charAt(1)) {
+                        
                         // leaderboard
                         case '0':
                             String token0 = inputLine.substring(3);
                             res = this.req.getLeaderboard(token0);
                             break;
 
-                            // leaderboard entry
+                        // leaderboard entry
                         case '1':
                             int firstHyphenIdx1 = inputLine.indexOf('-');
                             int secondHyphenIdx1 = inputLine.indexOf('-', firstHyphenIdx1 + 1);
@@ -193,7 +213,7 @@ public class MinesweeperServer {
                             res = this.req.getLeaderboardEntry(username1, level1, token1);
                             break;
 
-                            // logout
+                        // logout
                         case '2':
                             int firstHyphenIdx2 = inputLine.indexOf('-');
                             int secondHyphenIdx2 = inputLine.indexOf('-', firstHyphenIdx2 + 1);
@@ -247,6 +267,18 @@ public class MinesweeperServer {
         public void broadcast(String s) {
             System.out.println("broadcasted!");
             this.out.println(s);
+        }
+        
+        @Override
+        public void interrupt() {
+            super.interrupt();
+            
+            try {
+                this.clientSocket.close();
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -123,6 +123,8 @@ public class MinesweeperClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        
+        System.out.println(res);
 
         // Check for errors
         JSONObject obj = new JSONObject(res);
@@ -162,8 +164,10 @@ public class MinesweeperClient {
         // Extract the token
         this.statusCode = 201;
 
-        // Close the leaderboard client once the user logs out
+        // Close the leaderboard client once the user logs out and send a message to the server to remove it from the list
         this.leaderboardClient.close();
+        
+        this.out.println("minesweeper-logout");
 
     }
 

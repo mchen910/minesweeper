@@ -217,6 +217,7 @@ public class MinesweeperRequest {
     public String loginUser(String username, String password) {
         try {
             URL url = new URL(this.URI + this.playerLogin);
+            System.out.println(url);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             conn.setRequestMethod("POST");
@@ -228,6 +229,7 @@ public class MinesweeperRequest {
 
             conn.setDoOutput(true);
             String reqBody = "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
+            System.out.println(reqBody);
             conn.getOutputStream().write(reqBody.getBytes());
             conn.getOutputStream().flush();
 

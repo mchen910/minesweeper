@@ -104,6 +104,7 @@ public class MinesweeperGUI extends Application {
         launch(args);
     }
 
+    
     @Override
     public void start(Stage stage) throws Exception {
         stage.setTitle("Minesweeper");

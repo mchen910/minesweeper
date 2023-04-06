@@ -61,7 +61,7 @@ public class LeaderboardClient extends Thread {
         try {
             while (this.flag) {
                 inputLine = in.readLine();
-                if (inputLine.equals(".")) {
+                if (inputLine != null && inputLine.equals(".")) {
                     this.socket.close();
                     break;
                 }
@@ -79,5 +79,6 @@ public class LeaderboardClient extends Thread {
 
     public void close() {
         this.flag = false;
+        this.interrupt();
     }
 }

@@ -10,7 +10,7 @@ public class Client {
     public static void main(String[] args) {
         MinesweeperClient client = new MinesweeperClient();
         try {
-            client.startConnection("10.19.94.10", 5555);
+            client.startConnection("127.0.0.1", 5555);
             System.out.println("connection started");
             client.login("mchen354", "password");
             //			
