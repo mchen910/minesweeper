@@ -1,7 +1,6 @@
 # Minesweeper #
 This game can be played in two ways: either by yourself as a standalone game, or against others by creating an account and logging in to save your score on a leaderboard.
 
-
 ## ⚠️ NOTE: this project is not complete yet ⚠️ ##
 Currently running `src/minesweeper/MinesweeperGUI.java` will look like Lab 7.4, but I'm planning on resubmitting. Below is a description of my project idea and what I have accomplished so far.
 
@@ -39,7 +38,6 @@ For the API_KEY field, use any 128-bit base 16 string.
 
 Finally, for the NODE_PATH field, put the absolute path to your `node` installation.
 
-
 ### Starting the Server ###
 Start the server by creating a file named `Server.java` in the src folder. To create the server, add the following:
 
@@ -48,12 +46,11 @@ import server.MinesweeperServer;
 
 public class Server {
     public static void main(String[] args) {
-		MinesweeperServer server = MinesweeperServer.getInstance();
-		server.start();
-	}
+        MinesweeperServer server = MinesweeperServer.getInstance();
+        server.start();
+    }
 }
 ```
-
 
 ### Connecting to the Server ###
 The functionality has already been coded in, but there is currently no login page for the user. The underlying code for connecting to the server, authenticating the user, getting and posting data, etc. is all there but I didn't have enough time to finish the application portion.
