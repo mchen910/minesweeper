@@ -6,15 +6,15 @@
     Is this lab fully working?  Yes
     If not, explain: 
     If resubmitting, explain: 
-*/
+ */
 
 package minesweeper;
 
 
 public interface MinesweeperListener {
-	
-	public void cellChanged(int row, int col, int oldVal, int newVal);
-	
-	public void gridReplaced();
-	
+
+    public void cellChanged(int row, int col, int oldVal, int newVal);
+
+    public void gridReplaced();
+
 }
