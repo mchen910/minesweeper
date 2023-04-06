@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import javafx.scene.layout.Pane;
 import javafx.util.Pair;
+import utils.JSONArray;
 
 public class MinesweeperLeaderboard extends Pane {
 	
@@ -26,5 +27,13 @@ public class MinesweeperLeaderboard extends Pane {
 	}
 	
 	
+	public void updateLeaderboard(String jsonLeaderboard) {
+		JSONArray leaderboardArr = new JSONArray(jsonLeaderboard);
+		ArrayList<Pair<String, Integer>> newLeaderboard = new ArrayList<>();
+		
+		for (int i = 0; i < leaderboardArr.size(); i++) {
+			
+		}
+	}
 	
 }

@@ -37,7 +37,7 @@ public class MinesweeperClient {
     private int port;
     
     
-    private Thread leaderboardClient;
+    private LeaderboardClient leaderboardClient;
     
     
     public MinesweeperClient() {
@@ -70,7 +70,7 @@ public class MinesweeperClient {
         	this.ip = ip;
         	this.port = port;
         	
-            this.clientSocket = new Socket(ip, port);
+        	this.clientSocket = new Socket(ip, port);
             this.out = new PrintWriter(this.clientSocket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
             
@@ -78,12 +78,14 @@ public class MinesweeperClient {
             this.out.println("minesweeper-login");
             String res = this.in.readLine();
             
-            if (!res.equals("confirmed")) {
-            	throw new ConnectException("Invalid server address");
-            }
-        
+            if (!res.equals("confirmed"))
+            	throw new ConnectException();
+            
+        } catch (ConnectException e) {
+        	throw new ConnectException("invalid server address");
+        	
         } catch (IOException e) {
-            e.printStackTrace();
+        	e.printStackTrace();
         }
     }
 
@@ -134,7 +136,7 @@ public class MinesweeperClient {
     	this.statusCode = 201;
     	
     	// Start the leaderboard client once the user logs in successfully
-    	this.leaderboardClient = new Thread(new LeaderboardClient(this.ip, this.port));
+    	this.leaderboardClient = new LeaderboardClient(this.ip, this.port);
     	leaderboardClient.start();
     }
     
@@ -161,7 +163,8 @@ public class MinesweeperClient {
     	this.statusCode = 201;
     	
     	// Close the leaderboard client once the user logs out
-    	this.leaderboardClient.interrupt();
+    	this.leaderboardClient.close();
+
     }
     
     
@@ -241,6 +244,8 @@ public class MinesweeperClient {
             this.in.close();
             this.out.close();
             this.clientSocket.close();
+            
+            System.out.println(this.leaderboardClient.isAlive());
 
         } catch (IOException e) {
             e.printStackTrace();

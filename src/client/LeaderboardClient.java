@@ -18,7 +18,7 @@ import java.net.Socket;
 
 import minesweeper.MinesweeperLeaderboard;
 
-public class LeaderboardClient implements Runnable {
+public class LeaderboardClient extends Thread {
 
 	private int port;
 	private String ip;
@@ -27,6 +27,8 @@ public class LeaderboardClient implements Runnable {
 	private Socket socket;
 	
     private MinesweeperLeaderboard leaderboard;
+    
+    private volatile boolean flag = true;
     
 	
     public LeaderboardClient(String serverIP, int serverPort) {
@@ -53,20 +55,20 @@ public class LeaderboardClient implements Runnable {
 
     @Override
     public void run() {
-        startClient();
-        
         String inputLine;
+        this.startClient();
 
         try {
-			while ((inputLine = in.readLine()) != null) {
+			while (this.flag) {
+				inputLine = in.readLine();
 				if (inputLine.equals(".")) {
 					this.socket.close();
 					break;
 				}
 				
 				System.out.println("broadcast received");
-				
 			}
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -75,5 +77,7 @@ public class LeaderboardClient implements Runnable {
     }
     
     
-	
+	public void close() {
+		this.flag = false;
+	}
 }

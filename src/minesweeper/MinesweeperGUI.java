@@ -506,14 +506,16 @@ public class MinesweeperGUI extends Application {
 				int port = Integer.parseInt(res.getKey().getValue());
 				
 				try {
+					System.out.println(ip);
+					System.out.println(port);
 					this.client.startConnection(ip, port);
 					
 				} catch (ConnectException e) {
-					System.out.println("error");
 					Alert a = new Alert(AlertType.ERROR, "Connection refused. Check the IP address or port number of the server.");
 					a.setTitle("Invalid Server Information");
 					a.setHeaderText(null);
 					a.showAndWait();
+					settingsDialog.showAndWait();
 				}
 				
 				this.animationsOn = res.getValue().getKey();
@@ -528,10 +530,21 @@ public class MinesweeperGUI extends Application {
 
 			client.login(username, password);
 			
-			if (client.getStatus() > 299)
-				System.out.println("status: " + client.getStatus() + ", login failed");
-			
-			stage.setScene(gameScene);
+			if (client.getStatus() == 401) {
+				Alert a = new Alert(AlertType.ERROR, "Incorrect password.", ButtonType.OK);
+				a.setTitle("Incorrect Password");
+				a.setHeaderText(null);
+				a.showAndWait();
+				
+			} else if (client.getStatus() == 404) {
+				Alert a = new Alert(AlertType.ERROR, "Username doesn't exist. Create a new user.", ButtonType.OK);
+				a.setTitle("Incorrect Password");
+				a.setHeaderText(null);
+				a.showAndWait();
+				
+			} else {
+				stage.setScene(gameScene);
+			}
 		});
 		
 		signupBtn.setOnAction(event -> {

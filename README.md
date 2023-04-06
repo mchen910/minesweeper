@@ -1,5 +1,5 @@
 # Minesweeper #
-This game can be played in two ways: either by yourself as a standalone game, or against others by creating an account and logging in to save your score on a leaderboard.<br>​
+This game can be played in two ways: either by yourself as a standalone game, or against others by creating an account and logging in to save your score on a leaderboard.
 
 
 ## ⚠️ NOTE: this project is not complete yet ⚠️ ##
@@ -7,7 +7,7 @@ Currently running `src/minesweeper/MinesweeperGUI.java` will look like Lab 7.4, 
 
 <br>To play the standalone game, run `MinesweeperGUI.java` in `src/minesweeper` and don't click the login button. 
 
-To play a game with others, someone needs to start a server. It's easiest to host the server on your own device, and have others connect to it from their own computers. Because the program needs to access a database in the cloud, I used Node.js with `mongoose` to write an API. To set this up, follow the steps below: <br>​
+To play a game with others, someone needs to start a server. It's easiest to host the server on your own device, and have others connect to it from their own computers. Because the program needs to access a database in the cloud, I used Node.js with `mongoose` to write an API. To set this up, follow the steps below: 
 
 ### Dependencies ###
 To set this project up, run the following commands:
@@ -38,7 +38,6 @@ Choose ports for the API and server (I chose 3000 and 5555, respectively).
 For the API_KEY field, use any 128-bit base 16 string.
 
 Finally, for the NODE_PATH field, put the absolute path to your `node` installation.
-<br>​
 
 
 ### Starting the Server ###
@@ -54,7 +53,6 @@ public class Server {
 	}
 }
 ```
-<br>​
 
 
 ### Connecting to the Server ###

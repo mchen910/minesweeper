@@ -43,14 +43,13 @@ public class JSONObject extends JSONElement {
 
 	
 	private void getObjects(String jsonStr) {
+		this.objects = new HashMap<>();
+		
 		if (!(jsonStr.charAt(0) == CURLY_OPEN_BRACKET && 
 			  jsonStr.charAt(jsonStr.length() - 1) == CURLY_CLOSE_BRACKET))
 			return;
-		
-		
-		this.objects = new HashMap<>();
-		
-		if (jsonStr.equals("{}"))
+
+		if (jsonStr.equals("{}")) 
 			return;
 		
 		/**
