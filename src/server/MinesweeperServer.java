@@ -30,7 +30,7 @@ public class MinesweeperServer {
     private Process apiProcess;
     private Dotenv dotenv;
 
-    private static ArrayList<MinesweeperBroadcastHandler> connections;
+    private ArrayList<MinesweeperBroadcastHandler> broadcastConnections;
     private ArrayList<String> ipConnections;
 
 
@@ -42,7 +42,7 @@ public class MinesweeperServer {
             e.printStackTrace();
         }
 
-        MinesweeperServer.connections = new ArrayList<>();
+        this.broadcastConnections = new ArrayList<>();
         this.ipConnections = new ArrayList<>();
     }
 
@@ -65,14 +65,16 @@ public class MinesweeperServer {
             this.serverSocket = new ServerSocket(port);
 
             while (true) {
-                // Check if there is already a socket with the same IP address. If one already exists, the next 
-                // will be passed to MinesweeperBroadcastHandler as opposed to MinesweeperClientHandler
                 Socket socket = this.serverSocket.accept();
                 String ip = socket.getInetAddress().getHostAddress();
+                
+                System.out.println(this.ipConnections);
 
+                // Check if there is already a socket with the same IP address. If one already exists, the next 
+                // will be passed to MinesweeperBroadcastHandler as opposed to MinesweeperClientHandler
                 if (this.ipConnections.contains(ip)) {
                     MinesweeperBroadcastHandler broadcastHandler = new MinesweeperBroadcastHandler(socket);
-                    MinesweeperServer.connections.add(broadcastHandler);
+                    this.broadcastConnections.add(broadcastHandler);
                     broadcastHandler.start();
 
                 } else {
@@ -103,7 +105,7 @@ public class MinesweeperServer {
 
 
     public void broadcastMessage(String res) {
-        for (MinesweeperBroadcastHandler handler : MinesweeperServer.connections) {
+        for (MinesweeperBroadcastHandler handler : this.broadcastConnections) {
             handler.out.println(res);
         }
     }
@@ -121,7 +123,7 @@ public class MinesweeperServer {
     }
 
 
-    private static class MinesweeperClientHandler extends Thread {
+    private class MinesweeperClientHandler extends Thread {
         
         private Socket clientSocket;
         private PrintWriter out;
@@ -153,14 +155,7 @@ public class MinesweeperServer {
                     // check for logout
                     if (inputLine.equals("minesweeper-logout")) {
                         System.out.println("logout confirmed");
-                        
-                        for (MinesweeperBroadcastHandler handler : MinesweeperServer.connections) {
-                            if (handler.clientSocket.getInetAddress().equals(this.clientSocket.getInetAddress())) {
-                                MinesweeperServer.connections.remove(handler);
-                                handler.interrupt();
-                                break;
-                            }
-                        }
+                        ipConnections.remove(this.clientSocket.getInetAddress().getHostAddress());
                         
                         continue;
                     }
@@ -228,7 +223,7 @@ public class MinesweeperServer {
 
                             // Broadcast the new leaderboard to all connected clients
                             String newLeaderboard = this.req.getLeaderboard(token2);
-                            for (MinesweeperBroadcastHandler h : MinesweeperServer.connections) 
+                            for (MinesweeperBroadcastHandler h : broadcastConnections) 
                                 h.broadcast(newLeaderboard);
 
                             break;
