@@ -37,7 +37,7 @@ public class MinesweeperClient {
     private int port;
 
 
-    private LeaderboardClient leaderboardClient;
+    public LeaderboardClient leaderboardClient;
 
 
     public MinesweeperClient() {
@@ -165,7 +165,9 @@ public class MinesweeperClient {
         this.statusCode = 201;
 
         // Close the leaderboard client once the user logs out and send a message to the server to remove it from the list
+        System.out.println("closing leaderboard client");
         this.leaderboardClient.close();
+        System.out.println("done");
         
         this.out.println("minesweeper-logout");
 
@@ -248,8 +250,8 @@ public class MinesweeperClient {
             this.in.close();
             this.out.close();
             this.clientSocket.close();
-
-            System.out.println(this.leaderboardClient.isAlive());
+            
+            System.out.println(this.clientSocket.isClosed());
 
         } catch (IOException e) {
             e.printStackTrace();

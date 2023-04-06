@@ -27,8 +27,8 @@ public class LeaderboardClient extends Thread {
     private Socket socket;
 
     private MinesweeperLeaderboard leaderboard;
-
-    private volatile boolean flag = true;
+    
+    private volatile boolean running = true;
 
 
     public LeaderboardClient(String serverIP, int serverPort) {
@@ -59,26 +59,32 @@ public class LeaderboardClient extends Thread {
         this.startClient();
 
         try {
-            while (this.flag) {
-                inputLine = in.readLine();
-                if (inputLine != null && inputLine.equals(".")) {
-                    this.socket.close();
-                    break;
+            while (this.running) {
+               inputLine = in.readLine();
+                if (inputLine != null) {
+                    System.out.println(inputLine);
                 }
 
                 System.out.println("broadcast received");
             }
-
+            
+            System.out.println("closing leaderboard client socket");
+            this.socket.close();
+            return;
+ 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+        
         }
 
     }
-
-
+    
+    
     public void close() {
-        this.flag = false;
+        System.out.println("setting running to false");
+        this.running = false;
+        
+        System.out.println("running: " + this.running);
         this.interrupt();
     }
 }
