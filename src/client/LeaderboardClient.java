@@ -60,12 +60,13 @@ public class LeaderboardClient extends Thread {
 
         try {
             while (this.running) {
-               inputLine = in.readLine();
+                inputLine = in.readLine();
                 if (inputLine != null) {
                     System.out.println(inputLine);
                 }
 
                 System.out.println("broadcast received");
+                this.leaderboard.updateLeaderboard(inputLine);
             }
             
             System.out.println("closing leaderboard client socket");
