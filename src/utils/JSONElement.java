@@ -86,12 +86,20 @@ public class JSONElement {
     public static String cleanup(String jsonStr) {
         String s = "";
         boolean inQuotes = false;
+        
+        String noEscapeChars = "";
+        
+        // remove all newlines
+        for (int i = 0; i < jsonStr.length(); i++) {
+        	if (jsonStr.charAt(i) != '\n' && jsonStr.charAt(i) != '\t')
+        		noEscapeChars += jsonStr.charAt(i);
+        }
 
         // Replace double with single quotes
-        jsonStr = jsonStr.replace('\"', '\'');
+        String singleQuoteStr = noEscapeChars.replace('\"', '\'');
 
-        for (int i = 0; i < jsonStr.length(); i++) {
-            char c = jsonStr.charAt(i);
+        for (int i = 0; i < singleQuoteStr.length(); i++) {
+            char c = singleQuoteStr.charAt(i);
 
             if (c == '\'')
                 inQuotes = !inQuotes;
@@ -102,6 +110,7 @@ public class JSONElement {
             else if (!inQuotes && c != ' ')
                 s += c;
         }
+        
 
         return s;
     }
