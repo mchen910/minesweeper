@@ -14,7 +14,6 @@ import java.io.File;
 import java.net.ConnectException;
 import java.util.Optional;
 
-import client.MinesweeperClient;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
@@ -57,6 +56,8 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.Pair;
+
+import client.MinesweeperClient;
 
 
 public class MinesweeperGUI extends Application {

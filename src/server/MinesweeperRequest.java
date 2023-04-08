@@ -72,7 +72,7 @@ public class MinesweeperRequest {
      */
     public String getLeaderboard(String token) {
         try {
-            URL url = new URL(this.URI + this.leaderboardURL);
+            URL url = new URL(this.URI + this.leaderboardURL + "?limit=9"); // limit to 9
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             conn.setRequestMethod("GET");
