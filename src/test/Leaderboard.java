@@ -13,7 +13,6 @@ public class Leaderboard extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		
 		MinesweeperLeaderboard leaderboard = new MinesweeperLeaderboard();
 		
 		String jsonStr = "[\n"
