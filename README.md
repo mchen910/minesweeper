@@ -96,5 +96,5 @@ The first is the `MinesweeperClient` class, which keeps track of the user's user
 
 Next is the `LeaderboardClient` class, which opens another socket connection that can only listen to the server. The server class differentiates between two socket connections opened by the same client by adding the second one (the LeaderboardClient) to a separate ArrayList, which is then iterated over when broadcasting the leaderboard. One problem is that this LeaderboardClient needs to be opened in a new thread, which I can't stop at the moment, but as long as the user exits the game, it shouldn't be a problem.
 
-Finally, I created a `MinesweeperLeaderboard` class which extends Pane and animates when the leaderboard updates.
+Finally, I created a `MinesweeperLeaderboard` class which extends Pane and animates when the leaderboard updates. 
 
