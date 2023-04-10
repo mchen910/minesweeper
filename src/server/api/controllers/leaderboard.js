@@ -22,14 +22,6 @@ exports.leaderboard_list = [
         .bail()
         .contains('Bearer')
         .withMessage('Authorization Token is not Bearer'),
-    query('level')
-        .optional()
-        .isInt({min: 0, max: 2})
-        .withMessage('Level should be an integer between 0 and 2'),
-    query('limit')
-        .optional()
-        .isInt({min: 1})
-        .withMessage('Limit must be at least 1'),
 
     async (req, res, next) => {
         const errors = validationResult(req);
@@ -42,16 +34,8 @@ exports.leaderboard_list = [
                 return next(createError(401, 'Could not authorize request'));
             }
 
-            let level = req.query.level;
-            let limit = req.query.limit;
-
-            if (level === undefined)
-                level = { $exists: true };
-            if (limit === undefined)
-                limit = { $exists: true };
-
             // Sort the scores by level first and then by score
-            Leaderboard.find({ 'level': level }).sort({ 'level': 1, 'score': 1 }).then((playerList) => {
+            Leaderboard.find().sort({ 'level': 1, 'score': 1 }).then((playerList) => {
                 res.status(200).json(playerList);
             }).catch((err) => next(err));
         });
