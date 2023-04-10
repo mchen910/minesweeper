@@ -19,6 +19,7 @@ import javafx.animation.FillTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -77,12 +78,15 @@ public class MinesweeperGUI extends Application {
     private int currentRows = BEGINNER_ROWS;
     private int currentCols = BEGINNER_COLS;
     private int currentMines = BEGINNER_MINES;
+    
+    private int currentLevel;
 
     private MinesweeperModel model;
     private MinesweeperPane view;
     private MinesweeperTimer timer;
 
     private MinesweeperClient client;
+    private MinesweeperLeaderboard leaderboard;
 
     private Stage webStage;
     private Stage aboutStage;
@@ -94,11 +98,17 @@ public class MinesweeperGUI extends Application {
     private Button playAsGuestButton;
     private Button createAccountButton;
     private Button settingsButton;
+    private Button newGameButton;
+    
+    private ImageView faceAlive;
+    private ImageView faceDead;
+    private ImageView faceWon;
 
     private long time;
     private int flags;
     private boolean animationsOn;
     private boolean soundsOn;
+    private boolean playAsGuest;
 
 
     public static void main(String[] args) {
@@ -148,8 +158,8 @@ public class MinesweeperGUI extends Application {
         engine.load(url);
 
         Scene webScene = new Scene(webview);
-        webStage = new Stage();
-        webStage.setScene(webScene);
+        this.webStage = new Stage();
+        this.webStage.setScene(webScene);
 
         VBox dialogLayout = new VBox();
         dialogLayout.setAlignment(Pos.CENTER);
@@ -165,10 +175,11 @@ public class MinesweeperGUI extends Application {
 
         dialogLayout.getChildren().addAll(gameLbl, nameLbl);
 
-        aboutStage = new Stage();
+        this.aboutStage = new Stage();
+        
         Scene aboutScene = new Scene(dialogLayout);
-        aboutStage.setScene(aboutScene);
-        aboutStage.setTitle("About");
+        this.aboutStage.setScene(aboutScene);
+        this.aboutStage.setTitle("About");
 
 
 
@@ -176,8 +187,14 @@ public class MinesweeperGUI extends Application {
         view = new MinesweeperPane();
         model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
         view.setModel(model);
+        
+        this.currentLevel = 0;
+        this.playAsGuest = true;
 
         view.setOnMousePressed(e -> {
+            if (model.isGameOver() || model.isGameWon())
+                return;
+            
             if (e.getButton() == MouseButton.PRIMARY || e.getButton() == MouseButton.SECONDARY) {
                 int col = view.rowForYPos(e.getY());
                 int row = view.colForXPos(e.getX());
@@ -197,15 +214,17 @@ public class MinesweeperGUI extends Application {
                     model.reveal(row, col);
 
                 } else {
-                    model.setFlag(row, col);
+                    if (!model.isRevealed(row, col)) {
+                        model.setFlag(row, col);
 
-                    // Set mine number label
-                    if (model.isFlag(row, col)) 
-                        flags--;
-                    else
-                        flags++;
+                        // Set mine number label
+                        if (model.isFlag(row, col)) 
+                            flags--;
+                        else
+                            flags++;
 
-                    mineLbl.setText("Mines Remaining\n" + flags);
+                        mineLbl.setText("Mines Remaining\n" + flags);
+                    }
                 }
             }
         });
@@ -218,57 +237,60 @@ public class MinesweeperGUI extends Application {
 
         /* ======================= MENUS ========================= */
         beginnerGame.setOnAction(event -> {
-            model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
-            view.setModel(model);
+            this.model = new MinesweeperModel(BEGINNER_ROWS, BEGINNER_COLS, BEGINNER_MINES);
+            this.view.setModel(this.model);
+            this.currentLevel = 0;
 
-            currentRows = BEGINNER_ROWS;
-            currentCols = BEGINNER_COLS;
-            currentMines = BEGINNER_MINES;
+            this.currentRows = BEGINNER_ROWS;
+            this.currentCols = BEGINNER_COLS;
+            this.currentMines = BEGINNER_MINES;
 
-            timer.stop();
-            time = 0;
-            timer.start();
+            this.timer.stop();
+            this.time = 0;
+            this.timeLbl.setText("Time Elapsed\n" + this.time);
             stage.sizeToScene();
 
-            flags = model.getNumMines();
-            mineLbl.setText("Mines Remaining\n" + flags);
+            this.flags = this.model.getNumMines();
+            this.mineLbl.setText("Mines Remaining\n" + this.flags);
         });
 
 
         intermediateGame.setOnAction(event -> {
-            model = new MinesweeperModel(INTERMEDIATE_ROWS, INTERMEDIATE_COLS, INTERMEDIATE_MINES);
-            view.setModel(model);
-            view.setTileSize(15);
+            this.model = new MinesweeperModel(INTERMEDIATE_ROWS, INTERMEDIATE_COLS, INTERMEDIATE_MINES);
+            this.view.setModel(this.model);
+            this.view.setTileSize(15);
+            this.currentLevel = 1;
 
-            currentRows = INTERMEDIATE_ROWS;
-            currentCols = INTERMEDIATE_COLS;
-            currentMines = INTERMEDIATE_MINES;
+            this.currentRows = INTERMEDIATE_ROWS;
+            this.currentCols = INTERMEDIATE_COLS;
+            this.currentMines = INTERMEDIATE_MINES;
 
-            timer.stop();
-            time = 0;
-            timer.start();
+            this.timer.stop();
+            this.time = 0;
+            this.timeLbl.setText("Time Elapsed\n" + this.time);
             stage.sizeToScene();
 
-            flags = model.getNumMines();
-            mineLbl.setText("Mines Remaining\n" + flags);
+            this.flags = this.model.getNumMines();
+            this.mineLbl.setText("Mines Remaining\n" + this.flags);
         });
 
         expertGame.setOnAction(event -> {
-            model = new MinesweeperModel(EXPERT_ROWS, EXPERT_COLS, EXPERT_MINES);
-            view.setModel(model);
-            view.setTileSize(15);
+            this.model = new MinesweeperModel(EXPERT_ROWS, EXPERT_COLS, EXPERT_MINES);
+            this.view.setModel(model);
+            this.view.setTileSize(15);
+            this.currentLevel = 2;
 
-            currentRows = EXPERT_ROWS;
-            currentCols = EXPERT_COLS;
-            currentMines = EXPERT_MINES;
+            this.currentRows = EXPERT_ROWS;
+            this.currentCols = EXPERT_COLS;
+            this.currentMines = EXPERT_MINES;
 
-            timer.stop();
-            time = 0;
-            timer.start();
+            this.timer.stop();
+            this.time = 0;
+            this.timeLbl.setText("Time Elapsed\n" + this.time);
             stage.sizeToScene();
 
-            flags = model.getNumMines();
-            mineLbl.setText("Mines Remaining\n" + flags);
+            this.flags = this.model.getNumMines();
+            this.mineLbl.setText("Mines Remaining\n" + this.flags);
         });
 
 
@@ -279,21 +301,45 @@ public class MinesweeperGUI extends Application {
             input.setTitle("Number of Mines");
             input.setHeaderText("How many mines would you like?");  
             input.showAndWait();  
+            
+            int mines;
 
-            String answer = input.getEditor().getText(); 
-            int mines = Integer.parseInt(answer);
+            while (true) {
+                String answer = input.getEditor().getText(); 
+                try {
+                    mines = Integer.parseInt(answer);
+                    if (mines < 1 || mines > currentRows * currentCols - 1) {
+                        Alert a = new Alert(AlertType.ERROR, "The number of mines must be between 1 and " + (currentRows * currentCols - 1), ButtonType.OK);
+                        a.setHeaderText(null);
+                        a.showAndWait();
+                        input.showAndWait();
+                        
+                    } else {
+                        break; 
+                    }
+                    
+                } catch (NumberFormatException e) {
+                    Alert a = new Alert(AlertType.ERROR, "The number of mines must be an integer" , ButtonType.OK);
+                    a.setHeaderText(null);
+                    a.showAndWait();
+                    input.showAndWait();
+                }
+            }
+            
 
-            if (mines > 0 && mines < currentRows * currentCols)
-                currentMines = mines;
-
+            currentMines = mines;
             model = new MinesweeperModel(currentRows, currentCols, currentMines);
             view.setModel(model);
+            
+            this.time = 0;
+            this.timeLbl.setText("Time Elapsed\n" + this.time);
+            this.flags = this.model.getNumMines();
+            this.mineLbl.setText("Mines Remaining\n" + this.flags);
         });
 
         aboutMenu.setOnAction(event -> aboutStage.show());
         howToPlayMenu.setOnAction(event -> webStage.show());
-
-
+        
 
         /* ======================= GUI ========================= */
         VBox layout = new VBox();
@@ -302,32 +348,50 @@ public class MinesweeperGUI extends Application {
         upperLayout.setAlignment(Pos.CENTER);
         layout.setAlignment(Pos.CENTER);
 
-        flags = model.getNumMines();
-        mineLbl = new Label();
-        mineLbl.setText("Mines Remaining\n" + flags);
-        mineLbl.setTextAlignment(TextAlignment.CENTER);
-        mineLbl.setPadding(new Insets(10));
+        this.flags = model.getNumMines();
+        this.mineLbl = new Label();
+        this.mineLbl.setText("Mines Remaining\n" + flags);
+        this.mineLbl.setTextAlignment(TextAlignment.CENTER);
+        this.mineLbl.setPadding(new Insets(10));
 
-        time = 0;
-        timeLbl = new Label();
-        timeLbl.setText("Time Elapsed\n" + this.time);
-        timeLbl.setTextAlignment(TextAlignment.CENTER);
-        timeLbl.setPadding(new Insets(10));
+        this.time = 0;
+        this.timeLbl = new Label();
+        this.timeLbl.setText("Time Elapsed\n" + this.time);
+        this.timeLbl.setTextAlignment(TextAlignment.CENTER);
+        this.timeLbl.setPadding(new Insets(10));
 
-        Image face = new Image("file:images/face_smile.gif");
-        ImageView smileyFace = new ImageView(face);
+        this.faceAlive = new ImageView(new Image("file:images/game/face_smile.gif"));
+        this.faceDead = new ImageView(new Image("file:images/game/face_dead.gif"));
+        this.faceWon = new ImageView(new Image("file:images/game/face_win.gif"));
+        
+        this.newGameButton = new Button();
+        this.newGameButton.setGraphic(this.faceAlive);
 
-        upperLayout.getChildren().addAll(mineLbl, smileyFace, timeLbl);
-        layout.getChildren().addAll(upperLayout, view);
+        upperLayout.getChildren().addAll(this.mineLbl, this.newGameButton, this.timeLbl);
+        layout.getChildren().addAll(upperLayout, this.view);
         layout.setAlignment(Pos.CENTER);
 
         split.getItems().add(layout);
 
         root.setCenter(split);
         layout.setPadding(new Insets(15));
-
+        
         Scene gameScene = new Scene(root);
-        //stage.setScene(gameScene);
+
+        
+        /* ======================= BUTTONS ========================= */
+        this.newGameButton.setOnAction(event -> {
+            this.timer.stop();
+            this.time = 0;
+            this.timeLbl.setText("Time Elapsed\n" + this.time);
+            
+            this.flags = this.model.getNumMines();
+            this.mineLbl.setText("Mines Remaining\n" + this.flags);
+            
+            this.model = new MinesweeperModel(currentRows, currentCols, currentMines);
+            this.view.setModel(this.model);
+            this.newGameButton.setGraphic(this.faceAlive);
+        });
 
 
 
@@ -346,8 +410,6 @@ public class MinesweeperGUI extends Application {
 
         titleLayout.getChildren().addAll(this.loginButton, this.createAccountButton, this.playAsGuestButton, this.settingsButton);
         openPane.setCenter(titleLayout);
-
-        MenuBar openMenuBar = new MenuBar();
 
 
         /* ======================= SETTINGS =========================== */
@@ -378,6 +440,7 @@ public class MinesweeperGUI extends Application {
         settingsGrid.add(animationToggle, 1, 2);
         settingsGrid.add(new Label("Sounds"), 0, 3);
         settingsGrid.add(soundToggle, 1, 3);
+        settingsGrid.setAlignment(Pos.BASELINE_RIGHT);
 
         ButtonType applyBtnType = new ButtonType("Apply", ButtonData.APPLY);
         ButtonType cancelBtnType = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
@@ -530,21 +593,27 @@ public class MinesweeperGUI extends Application {
             String username = usernameField.getText();
             String password = passwordField.getText();
 
-            client.login(username, password);
+            this.client.login(username, password);
 
-            if (client.getStatus() == 401) {
+            if (this.client.getStatus() == 401) {
                 Alert a = new Alert(AlertType.ERROR, "Incorrect password.", ButtonType.OK);
                 a.setTitle("Incorrect Password");
                 a.setHeaderText(null);
                 a.showAndWait();
 
-            } else if (client.getStatus() == 404) {
+            } else if (this.client.getStatus() == 404) {
                 Alert a = new Alert(AlertType.ERROR, "Username doesn't exist. Create a new user.", ButtonType.OK);
                 a.setTitle("Incorrect Password");
                 a.setHeaderText(null);
                 a.showAndWait();
 
             } else {
+                this.leaderboard = new MinesweeperLeaderboard();
+                this.leaderboard.initLeaderboard(this.client.leaderboard(), this.currentLevel);
+                this.client.connectLeaderboard(this.leaderboard);
+                
+                this.playAsGuest = false;
+                split.getItems().add(this.leaderboard);
                 stage.setScene(gameScene);
             }
         });
@@ -561,27 +630,33 @@ public class MinesweeperGUI extends Application {
                 a.setTitle("Username Error");
                 a.setHeaderText(null);
                 a.showAndWait();
+                
+            } else {
+                this.leaderboard = new MinesweeperLeaderboard();
+                this.leaderboard.initLeaderboard(this.client.leaderboard(), this.currentLevel);
+                this.client.connectLeaderboard(this.leaderboard);
+                
+                this.playAsGuest = false;
+                split.getItems().add(this.leaderboard);
+                stage.setScene(gameScene);
             }
-
-            stage.setScene(gameScene);
         });
 
         Scene titleScene = new Scene(openPane);
         stage.setScene(titleScene);
         stage.show();
 
-
-
-
-
-
-
-
-        // click smiley face to reset
-
-
-
-        stage.show();
+        stage.setOnCloseRequest(event -> {
+            // Check if the user is logged out
+            if (!client.isLoggedOut()) {
+                client.logout();
+            }
+            
+            client.stopConnection();
+            
+            Platform.exit();
+            System.exit(0);
+        });
     }
 
 
@@ -600,15 +675,24 @@ public class MinesweeperGUI extends Application {
                 this.previousTime = now;
 
             if (now - this.previousTime >= this.delay) {
-                if (model.isGameOver() || model.isGameWon()) {
+                if (model.isGameWon()) {
+                    this.stop();
+                    System.out.println("game won!");
+                    newGameButton.setGraphic(faceWon);
+                    
+                    client.updateInfo(currentLevel, time);
+                    
+                } else if (model.isGameOver()) {
                     this.stop();
                     System.out.println("Game over!");
-                    System.exit(0);
+                    newGameButton.setGraphic(faceDead);
+                    view.revealMines();
+                    
+                } else {
+                    time++;
+                    timeLbl.setText("Time Elapsed\n" + time);
+                    this.previousTime = now;
                 }
-
-                time++;
-                timeLbl.setText("Time Elapsed\n" + time);
-                this.previousTime = now;
             }
         }
     }

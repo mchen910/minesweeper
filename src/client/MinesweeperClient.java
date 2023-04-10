@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
 
+import minesweeper.MinesweeperLeaderboard;
 import utils.JSONObject;
 
 
@@ -64,6 +65,12 @@ public class MinesweeperClient {
         return this.port;
     }
 
+    
+    public void connectLeaderboard(MinesweeperLeaderboard leaderboard) {
+        this.leaderboardClient = new LeaderboardClient(this.ip, this.port);
+        this.leaderboardClient.connectLeaderboard(leaderboard);
+    }
+    
 
     public void startConnection(String ip, int port) throws ConnectException {
         try {
@@ -75,9 +82,10 @@ public class MinesweeperClient {
             this.in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
 
             // Send a login message and wait for confirmation
-            this.out.println("minesweeper-login");
+            this.out.println("minesweeper-connect");
             String res = this.in.readLine();
 
+            System.out.println(res);
             if (!res.equals("confirmed"))
                 throw new ConnectException();
 
@@ -222,7 +230,7 @@ public class MinesweeperClient {
     }
 
 
-    public void updateInfo(int level, int score) {
+    public void updateInfo(int level, long score) {
         String res = null;
 
         try {
@@ -245,19 +253,25 @@ public class MinesweeperClient {
     }
 
 
-    public void stopConnection() {
+    public void stopConnection() { 
+        this.out.println("minesweeper-disconnect");
+        
         try {
-            this.in.close();
-            this.out.close();
-            this.clientSocket.close();
+            if (this.in != null) this.in.close();
+            if (this.out != null) this.out.close();
+            if (this.clientSocket != null) this.clientSocket.close();
             
-            System.out.println(this.clientSocket.isClosed());
-
         } catch (IOException e) {
             e.printStackTrace();
+        
         }
     }
 
+    
+    public boolean isLoggedOut() {
+        return this.clientSocket == null || this.clientSocket.isClosed();
+    }
+    
 
     public int getStatus() {
         return this.statusCode;

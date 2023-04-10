@@ -50,12 +50,20 @@ public class MinesweeperPane extends Group implements MinesweeperListener {
 
     public void loadImgs() {
         this.imgs = new HashMap<String, Image>();
-        File imgPath = new File("images/");
-        File[] imgs = imgPath.listFiles();
+        File imgPath = new File("images/nums/");
+        File[] nameImgs = imgPath.listFiles();
+        File gamePath = new File("images/game/");
+        File[] gameImgs = gamePath.listFiles();
 
-        for (File f : imgs) {
+        for (File f : nameImgs) {
             String name = f.getName();
-            Image img = new Image("file:images/" + name);
+            Image img = new Image("file:images/nums/" + name);
+            this.imgs.put(name, img);
+        }
+        
+        for (File f : gameImgs) {
+            String name = f.getName();
+            Image img = new Image("file:images/game/" + name);
             this.imgs.put(name, img);
         }
     }
@@ -105,6 +113,17 @@ public class MinesweeperPane extends Group implements MinesweeperListener {
             }
         }
     }
+    
+    
+    public void revealMines() {
+        for (int i = 0; i < model.getNumRows(); i++) {
+            for (int j = 0; j < model.getNumCols(); j++) {
+                if (model.isMine(i, j) && !model.isRevealed(i, j)) {
+                    tiles[i][j].setImage(imgs.get("bomb_revealed.gif"));
+                }
+            }
+        }
+    }
 
 
     @Override
@@ -113,7 +132,7 @@ public class MinesweeperPane extends Group implements MinesweeperListener {
         switch (newVal) {
         case MinesweeperModel.REVEALED:
             if (model.isMine(row, col)) {
-                tiles[row][col].setImage(imgs.get("bomb_revealed.gif"));
+                tiles[row][col].setImage(imgs.get("bomb_death.gif"));
                 break;
             }
             tiles[row][col].setImage(imgs.get("num_" + model.getNumNeighboringMines(row, col) + ".gif"));
@@ -136,10 +155,12 @@ public class MinesweeperPane extends Group implements MinesweeperListener {
         resetTiles();
     }
 
+    
     public int colForXPos(double posX) {
         return (int)(posX / tileSize);
     }
 
+    
     public int rowForYPos(double posY) {
         return (int)(posY / tileSize);
     }

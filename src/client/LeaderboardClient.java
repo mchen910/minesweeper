@@ -61,16 +61,13 @@ public class LeaderboardClient extends Thread {
         try {
             while (this.running) {
                 inputLine = in.readLine();
-                if (inputLine != null) {
-                    System.out.println(inputLine);
-                }
-
-                System.out.println("broadcast received");
-                this.leaderboard.updateLeaderboard(inputLine);
+                if (inputLine != null && this.leaderboard != null)
+                    this.leaderboard.updateLeaderboard(inputLine);
             }
             
             System.out.println("closing leaderboard client socket");
             this.socket.close();
+            System.out.println("leaderboard client socket closed: " + this.socket.isClosed());
             return;
  
         } catch (IOException e) {
