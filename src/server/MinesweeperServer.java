@@ -147,13 +147,14 @@ public class MinesweeperServer {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
                     // check for login
-                    if (inputLine.equals("minesweeper-login")) {
+                    System.out.println(inputLine);
+                    if (inputLine.equals("minesweeper-connect")) {
                         this.out.println("confirmed");
                         continue;
                     }
                     
                     // check for logout
-                    if (inputLine.equals("minesweeper-logout")) {
+                    if (inputLine.equals("minesweeper-disconnect")) {
                         System.out.println("logout confirmed");
                         ipConnections.remove(this.clientSocket.getInetAddress().getHostAddress());
                         
@@ -230,7 +231,7 @@ public class MinesweeperServer {
                         }
                     }
 
-                    out.println(res);
+                    if (res != null) out.println(res);
                 }
 
                 in.close();
